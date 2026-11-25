@@ -28,23 +28,23 @@ const SV='pharaoh_memory_v1';let sv={best:0,snd:1};try{Object.assign(sv,JSON.par
 function persist(){try{localStorage.setItem(SV,JSON.stringify(sv))}catch(e){}}
 let AC=null;const FR=[330,415,523,659];function beep(f,d,t,v){if(!sv.snd)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),a=AC.createGain();o.type=t||'sine';o.frequency.value=f;a.gain.value=v||.1;a.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(a);a.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
 const B=[0,1,2,3].map(i=>document.getElementById('b'+i));
-let seq=[],pos=0,round=0,lives=3,streak=0,state='idle',gen=0;
+let rev=false,seq=[],pos=0,round=0,lives=3,streak=0,state='idle',gen=0;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function flash(i,ms){B[i].classList.add('on');beep(FR[i],ms/1000);return wait(ms).then(()=>B[i].classList.remove('on'))}
 function hud(){document.getElementById('lv').textContent='الجولة '+round;document.getElementById('hr').textContent='❤️'.repeat(lives)||'💔'}
 function say(t){document.getElementById('msg').textContent=t}
 async function play(){const my=++gen;state='show';say('بص كويس... 👀');await wait(700);const ms=Math.max(180,520-round*18);
  for(const i of seq){if(my!==gen)return;await flash(i,ms);await wait(ms*.45)}
- if(my!==gen)return;state='input';pos=0;say('دورك! 👆')}
-function nextRound(){round++;seq.push(Math.floor(Math.random()*4));hud();play()}
-function newGame(){gen++;seq=[];round=0;lives=3;streak=0;document.getElementById('menu').classList.add('hide');document.getElementById('over').classList.add('hide');nextRound()}
+ if(my!==gen)return;state='input';pos=0;say(rev?'عكس الترتيب! 🔄 ابدأ من الآخر':'دورك! 👆')}
+function nextRound(){round++;rev=round%7===0;seq.push(Math.floor(Math.random()*4));hud();play()}
+function newGame(){rev=false;gen++;seq=[];round=0;lives=3;streak=0;document.getElementById('menu').classList.add('hide');document.getElementById('over').classList.add('hide');nextRound()}
 function press(i){if(state!=='input')return;B[i].classList.add('on');beep(FR[i],.18);setTimeout(()=>B[i].classList.remove('on'),140);
- if(seq[pos]===i){pos++;if(pos===seq.length){state='wait';streak++;say('برافو! ✅');if(streak%5===0&&lives<5){lives++;say('قلب جديد ❤️');beep(900,.3,'triangle')}setTimeout(nextRound,900)}}
+ const want=rev?seq[seq.length-1-pos]:seq[pos];if(want===i){pos++;if(pos===seq.length){state='wait';streak++;say('برافو! ✅');if(streak%5===0&&lives<5){lives++;say('قلب جديد ❤️');beep(900,.3,'triangle')}setTimeout(nextRound,900)}}
  else{lives--;streak=0;hud();beep(110,.4,'sawtooth');if(lives<=0){state='idle';const sc=round-1;const nb=sc>sv.best;if(nb){sv.best=sc;persist()}say('غلط! ❌');setTimeout(()=>{document.getElementById('res').innerHTML='وصلت لجولة '+round+'<br>حفظت '+Math.max(0,sc)+' خطوة'+(nb?'<br>🏆 رقم قياسي جديد!':'<br>أعلى رقم: '+sv.best);document.getElementById('over').classList.remove('hide')},700)}else{state='wait';say('غلط! ❌ هنعيد التسلسل');setTimeout(play,1100)}}}
 B.forEach((b,i)=>b.addEventListener('pointerdown',e=>{e.preventDefault();press(i)}));
 addEventListener('keydown',e=>{const k={'1':0,'2':1,'3':2,'4':3}[e.key];if(k!==undefined)press(k)});
 document.getElementById('go').onclick=newGame;document.getElementById('again').onclick=newGame;
 document.getElementById('snd').onclick=function(){sv.snd=sv.snd?0:1;persist();this.textContent=sv.snd?'🔊':'🔇'};document.getElementById('snd').textContent=sv.snd?'🔊':'🔇';
 document.getElementById('bst').textContent=sv.best?'🏆 أعلى رقم: '+sv.best+' خطوة':'';
-window.__t={newGame,press,st:()=>({seq,state,round,lives,streak}),setFast:()=>{}};
+window.__t={newGame,press,st:()=>({rev,seq,state,round,lives,streak}),setFast:()=>{}};
 </script></body></html>
